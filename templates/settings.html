@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoSub — Settings</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a0a; color: #fff; }
+nav { padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1a1a1a; }
+.logo { font-size: 20px; font-weight: 700; color: #ff4500; }
+nav a { color: #999; text-decoration: none; font-size: 14px; margin-left: 20px; }
+.container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
+h1 { font-size: 26px; font-weight: 700; margin-bottom: 32px; }
+.section { background: #111; border: 1px solid #1a1a1a; border-radius: 12px; padding: 28px; margin-bottom: 20px; }
+.section h2 { font-size: 15px; font-weight: 600; margin-bottom: 16px; }
+label { display: block; font-size: 13px; color: #999; margin-bottom: 6px; }
+input, textarea { width: 100%; background: #0a0a0a; border: 1px solid #222; border-radius: 8px; padding: 12px 14px; color: #fff; font-size: 14px; margin-bottom: 16px; outline: none; font-family: inherit; }
+input:focus, textarea:focus { border-color: #ff4500; }
+textarea { resize: vertical; min-height: 100px; }
+.btn { background: #ff4500; color: #fff; border: none; padding: 14px 28px; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; width: 100%; }
+.btn:hover { background: #e03d00; }
+.flash { background: #0a1a0a; border: 1px solid #4caf50; border-radius: 8px; padding: 12px; margin-bottom: 20px; font-size: 13px; color: #4caf50; }
+</style>
+</head>
+<body>
+<nav>
+  <div class="logo">AutoSub</div>
+  <div>
+    <a href="/dashboard">Dashboard</a>
+    <a href="/logout">Log out</a>
+  </div>
+</nav>
+<div class="container">
+  <h1>Settings</h1>
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}{% for msg in messages %}<div class="flash">{{ msg }}</div>{% endfor %}{% endif %}
+  {% endwith %}
+  <form method="POST">
+    <div class="section">
+      <h2>DM copy</h2>
+      <label>Subject line</label>
+      <input type="text" name="dm_subject" value="{{ user.dm_subject or 'quick question' }}">
+      <label>Message</label>
+      <textarea name="offer_text">{{ user.offer_text or '' }}</textarea>
+    </div>
+    <div class="section">
+      <h2>Target keywords</h2>
+      <label>Keywords (comma separated)</label>
+      <textarea name="keywords">{{ user.keywords or '' }}</textarea>
+    </div>
+    <button type="submit" class="btn">Save and restart bot</button>
+  </form>
+</div>
+</body>
+</html>

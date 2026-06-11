@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoSub — Log In</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a0a; color: #fff; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+.card { background: #111; border: 1px solid #1a1a1a; border-radius: 16px; padding: 48px; width: 100%; max-width: 420px; }
+.logo { font-size: 22px; font-weight: 700; color: #ff4500; margin-bottom: 32px; }
+h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+p { color: #999; font-size: 14px; margin-bottom: 32px; }
+label { display: block; font-size: 13px; color: #999; margin-bottom: 6px; }
+input { width: 100%; background: #0a0a0a; border: 1px solid #222; border-radius: 8px; padding: 12px 14px; color: #fff; font-size: 14px; margin-bottom: 20px; outline: none; }
+input:focus { border-color: #ff4500; }
+.btn { width: 100%; background: #ff4500; color: #fff; border: none; padding: 14px; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; }
+.btn:hover { background: #e03d00; }
+.link { text-align: center; margin-top: 20px; font-size: 13px; color: #999; }
+.link a { color: #ff4500; text-decoration: none; }
+.flash { background: #1a0a0a; border: 1px solid #ff4500; border-radius: 8px; padding: 12px; margin-bottom: 20px; font-size: 13px; color: #ff6b35; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">AutoSub</div>
+  <h1>Welcome back</h1>
+  <p>Log in to your AutoSub account.</p>
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}{% for msg in messages %}<div class="flash">{{ msg }}</div>{% endfor %}{% endif %}
+  {% endwith %}
+  <form method="POST">
+    <label>Email</label>
+    <input type="email" name="email" placeholder="you@example.com" required>
+    <label>Password</label>
+    <input type="password" name="password" placeholder="••••••••" required>
+    <button type="submit" class="btn">Log in</button>
+  </form>
+  <div class="link">Don't have an account? <a href="/signup">Sign up</a></div>
+</div>
+</body>
+</html>

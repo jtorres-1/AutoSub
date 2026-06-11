@@ -1,0 +1,10 @@
+{
+  "name": "autosub-bot",
+  "version": "1.0.0",
+  "description": "AutoSub Reddit DM bot",
+  "main": "bots/bot.cjs",
+  "dependencies": {
+    "dotenv": "^16.0.0",
+    "snoowrap": "^1.23.0"
+  }
+}

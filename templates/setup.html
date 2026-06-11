@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoSub — Setup</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a0a; color: #fff; padding: 40px 20px; }
+.container { max-width: 600px; margin: 0 auto; }
+.logo { font-size: 22px; font-weight: 700; color: #ff4500; margin-bottom: 40px; }
+h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+.sub { color: #999; font-size: 14px; margin-bottom: 40px; }
+.section { background: #111; border: 1px solid #1a1a1a; border-radius: 12px; padding: 28px; margin-bottom: 20px; }
+.section h2 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+.section p { color: #999; font-size: 13px; margin-bottom: 20px; }
+label { display: block; font-size: 13px; color: #999; margin-bottom: 6px; }
+input, textarea { width: 100%; background: #0a0a0a; border: 1px solid #222; border-radius: 8px; padding: 12px 14px; color: #fff; font-size: 14px; margin-bottom: 16px; outline: none; font-family: inherit; }
+input:focus, textarea:focus { border-color: #ff4500; }
+textarea { resize: vertical; min-height: 100px; }
+.hint { font-size: 12px; color: #555; margin-top: -12px; margin-bottom: 16px; }
+.btn { background: #ff4500; color: #fff; border: none; padding: 14px 28px; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; width: 100%; }
+.btn:hover { background: #e03d00; }
+.flash { background: #1a0a0a; border: 1px solid #ff4500; border-radius: 8px; padding: 12px; margin-bottom: 20px; font-size: 13px; color: #ff6b35; }
+a.help { color: #ff4500; font-size: 13px; text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="logo">AutoSub</div>
+  <h1>Set up your bot</h1>
+  <p class="sub">Connect your Reddit account and configure your outreach.</p>
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}{% for msg in messages %}<div class="flash">{{ msg }}</div>{% endfor %}{% endif %}
+  {% endwith %}
+  <form method="POST">
+    <div class="section">
+      <h2>Reddit credentials</h2>
+      <p>Create an app at <a href="https://www.reddit.com/prefs/apps" target="_blank" class="help">reddit.com/prefs/apps</a> to get your client ID and secret. Choose "script" type.</p>
+      <label>Reddit username</label>
+      <input type="text" name="reddit_username" value="{{ user.reddit_username or '' }}" placeholder="your_reddit_username" required>
+      <label>Reddit password</label>
+      <input type="password" name="reddit_password" placeholder="your reddit password" required>
+      <label>Client ID</label>
+      <input type="text" name="reddit_client_id" value="{{ user.reddit_client_id or '' }}" placeholder="14 character string" required>
+      <label>Client Secret</label>
+      <input type="text" name="reddit_client_secret" value="{{ user.reddit_client_secret or '' }}" placeholder="27 character string" required>
+    </div>
+    <div class="section">
+      <h2>Your offer</h2>
+      <p>This is the DM that gets sent to every matching buyer. Keep it short, specific, and conversational.</p>
+      <label>DM subject line</label>
+      <input type="text" name="dm_subject" value="{{ user.dm_subject or 'quick question' }}" placeholder="quick question">
+      <label>DM message</label>
+      <textarea name="offer_text" placeholder="hey, saw your post. i built something that might help..." required>{{ user.offer_text or '' }}</textarea>
+    </div>
+    <div class="section">
+      <h2>Target keywords</h2>
+      <p>Keywords AutoSub searches for on Reddit. Comma separated. The bot finds posts containing these phrases and DMs the author.</p>
+      <label>Keywords</label>
+      <textarea name="keywords" placeholder="I need more clients, I need leads for my business, struggling to find customers" required>{{ user.keywords or '' }}</textarea>
+      <p class="hint">Example: "I need a developer, I need a website built, I need automation"</p>
+    </div>
+    <button type="submit" class="btn">Save and continue</button>
+  </form>
+</div>
+</body>
+</html>
