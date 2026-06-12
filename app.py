@@ -102,6 +102,7 @@ def create_checkout():
         checkout = stripe.checkout.Session.create(
             payment_method_types=["card"],
             mode="subscription",
+            allow_promotion_codes=True,
             line_items=[{"price": STRIPE_PRICE_ID, "quantity": 1}],
             success_url=request.host_url + "dashboard?success=1",
             cancel_url=request.host_url + "subscribe",
@@ -121,13 +122,17 @@ def webhook():
     except Exception as e:
         return str(e), 400
     if event["type"] == "checkout.session.completed":
-        session_obj = event["data"]["object"]
-        user_id = session_obj.get("metadata", {}).get("user_id")
+        obj = event["data"]["object"]
+        try:
+            metadata = obj["metadata"]
+            user_id = metadata["user_id"] if metadata and "user_id" in metadata else None
+        except Exception:
+            user_id = None
         if user_id:
             user = User.query.get(int(user_id))
             if user:
-                user.stripe_customer_id = session_obj.get("customer")
-                user.stripe_subscription_id = session_obj.get("subscription")
+                user.stripe_customer_id = obj.get("customer") if hasattr(obj, "get") else None
+                user.stripe_subscription_id = obj.get("subscription") if hasattr(obj, "get") else None
                 user.subscription_status = "active"
                 db.session.commit()
                 pid = start_bot(user)
@@ -183,3 +188,22 @@ def settings():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5002, debug=False)
+
+@app.route("/toggle-bot", methods=["POST"])
+def toggle_bot():
+    user = current_user()
+    if not user:
+        return redirect(url_for("login"))
+    if user.bot_running:
+        if user.bot_pid and is_running(user.bot_pid):
+            stop_bot(user.bot_pid)
+        user.bot_running = False
+        user.bot_pid = None
+        flash("Bot paused.")
+    else:
+        pid = start_bot(user)
+        user.bot_pid = pid
+        user.bot_running = True
+        flash("Bot started.")
+    db.session.commit()
+    return redirect(url_for("dashboard"))
