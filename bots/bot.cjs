@@ -26,25 +26,25 @@ const logPath = path.join(logDir, "bot.log");
 function log(tag, msg) {
   const line = `[${new Date().toISOString()}] ${tag}: ${msg}`;
   console.log(line);
-  fs.appendFileSync(logPath, line + "\n");
+  try { fs.appendFileSync(logPath, line + "\n"); } catch(e) {}
 }
 
 function loadContacted() {
   if (!fs.existsSync(contactedPath)) return {};
-  try { return JSON.parse(fs.readFileSync(contactedPath)); } catch { return {}; }
+  try { return JSON.parse(fs.readFileSync(contactedPath, "utf8")); } catch { return {}; }
 }
 
 function saveContacted(c) {
-  fs.writeFileSync(contactedPath, JSON.stringify(c, null, 2));
+  try { fs.writeFileSync(contactedPath, JSON.stringify(c, null, 2)); } catch(e) { log("ERROR", "saveContacted: " + e.message); }
 }
 
 function loadStats() {
   if (!fs.existsSync(statsPath)) return { dms_sent: 0, replies: 0, last_run: null };
-  try { return JSON.parse(fs.readFileSync(statsPath)); } catch { return { dms_sent: 0, replies: 0, last_run: null }; }
+  try { return JSON.parse(fs.readFileSync(statsPath, "utf8")); } catch { return { dms_sent: 0, replies: 0, last_run: null }; }
 }
 
 function saveStats(s) {
-  fs.writeFileSync(statsPath, JSON.stringify(s, null, 2));
+  try { fs.writeFileSync(statsPath, JSON.stringify(s, null, 2)); } catch(e) { log("ERROR", "saveStats: " + e.message); }
 }
 
 function isFresh(post) {
@@ -52,12 +52,7 @@ function isFresh(post) {
   return ageHours <= 24;
 }
 
-function matchesKeywords(post) {
-  const text = `${post.title} ${post.selftext}`.toLowerCase();
-  return KEYWORDS.some(k => text.includes(k.toLowerCase()));
-}
-
-const forHireBlockRegex = /\b(\[for hire\]|\[offering\]|i am available|i('m| am) a (developer|designer|programmer|dev)|offering my services|available for hire|hire me|my rates|starting at \$)\b/i;
+const forHireBlockRegex = /\b(\[for hire\]|\[offering\]|offering my services|available for hire|hire me|starting at \$)\b/i;
 
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
@@ -66,40 +61,30 @@ async function runCycle() {
   const contacted = loadContacted();
   const stats = loadStats();
   stats.last_run = new Date().toISOString();
-
+  saveStats(stats);
   let dmsSentThisCycle = 0;
   const MAX_DMS = 15;
-
   log("INFO", `Starting cycle. Keywords: ${KEYWORDS.join(", ")}`);
-
   for (const keyword of KEYWORDS) {
     if (dmsSentThisCycle >= MAX_DMS) break;
     try {
       await wait(2000);
-      const posts = await reddit.search({
-        query: keyword,
-        sort: "new",
-        time: "day",
-        limit: 50,
-      });
+      const posts = await reddit.search({ query: keyword, sort: "new", time: "day", limit: 25 });
+      log("INFO", `"${keyword}" returned ${posts.length} posts`);
       for (const post of posts) {
         if (dmsSentThisCycle >= MAX_DMS) break;
         if (!post.author || !isFresh(post)) continue;
         if (forHireBlockRegex.test(`${post.title} ${post.selftext}`)) continue;
-        if (!matchesKeywords(post)) continue;
         const username = post.author.name;
         if (contacted[username.toLowerCase()]) continue;
         if (username.toLowerCase() === (process.env.REDDIT_USERNAME || "").toLowerCase()) continue;
         try {
-          await reddit.composeMessage({
-            to: username,
-            subject: DM_SUBJECT,
-            text: OFFER_TEXT,
-          });
+          await reddit.composeMessage({ to: username, subject: DM_SUBJECT, text: OFFER_TEXT });
           contacted[username.toLowerCase()] = new Date().toISOString();
           saveContacted(contacted);
           dmsSentThisCycle++;
           stats.dms_sent++;
+          stats.last_run = new Date().toISOString();
           saveStats(stats);
           log("SENT", `u/${username} | keyword: "${keyword}"`);
           await wait(rand(2 * 60 * 1000, 4 * 60 * 1000));
@@ -112,7 +97,6 @@ async function runCycle() {
       await wait(15000);
     }
   }
-
   try {
     const unread = await reddit.getUnreadMessages({ limit: 25 });
     const toMark = [];
@@ -130,7 +114,6 @@ async function runCycle() {
   } catch (err) {
     log("ERROR", `Inbox check failed: ${err.message}`);
   }
-
   log("INFO", `Cycle complete. Sent ${dmsSentThisCycle} DMs. Total: ${stats.dms_sent}`);
 }
 
