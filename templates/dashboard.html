@@ -12,12 +12,12 @@ nav { padding: 20px 40px; display: flex; justify-content: space-between; align-i
 nav a { color: #999; text-decoration: none; font-size: 14px; margin-left: 20px; }
 nav a:hover { color: #fff; }
 .container { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
-h1 { font-size: 26px; font-weight: 700; margin-bottom: 32px; }
+h1 { font-size: 26px; font-weight: 700; margin-bottom: 32px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 32px; }
 .stat { background: #111; border: 1px solid #1a1a1a; border-radius: 12px; padding: 24px; }
 .stat .label { font-size: 12px; color: #999; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
 .stat .value { font-size: 36px; font-weight: 800; color: #ff4500; }
-.status { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-left: 12px; vertical-align: middle; }
+.status { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
 .status.running { background: #0a1f0a; color: #4caf50; border: 1px solid #4caf50; }
 .status.stopped { background: #1f0a0a; color: #f44336; border: 1px solid #f44336; }
 .section { background: #111; border: 1px solid #1a1a1a; border-radius: 12px; padding: 24px; margin-bottom: 20px; }
@@ -26,8 +26,14 @@ h1 { font-size: 26px; font-weight: 700; margin-bottom: 32px; }
 .log .sent { color: #4caf50; }
 .log .reply { color: #ff4500; }
 .log .error { color: #f44336; }
-.log .info { color: #555; }
+.log .info { color: #bbb; }
 .flash { background: #0a1a0a; border: 1px solid #4caf50; border-radius: 8px; padding: 12px; margin-bottom: 20px; font-size: 13px; color: #4caf50; }
+.toggle-btn { padding: 8px 20px; border-radius: 8px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; }
+.toggle-btn.stop { background: #1f0a0a; color: #f44336; border: 1px solid #f44336; }
+.toggle-btn.stop:hover { background: #f44336; color: #fff; }
+.toggle-btn.start { background: #0a1f0a; color: #4caf50; border: 1px solid #4caf50; }
+.toggle-btn.start:hover { background: #4caf50; color: #fff; }
+.refresh-badge { font-size: 11px; color: #555; margin-left: auto; }
 </style>
 </head>
 <body>
@@ -39,31 +45,29 @@ h1 { font-size: 26px; font-weight: 700; margin-bottom: 32px; }
   </div>
 </nav>
 <div class="container">
-  <h1>Dashboard
-    <span class="status {{ 'running' if user.bot_running else 'stopped' }}">
-      {{ 'Bot running' if user.bot_running else 'Bot stopped' }}
-    </span>
+  <h1>
+    Dashboard
+    <span class="status {{ 'running' if user.bot_running else 'stopped' }}">{{ 'Bot running' if user.bot_running else 'Bot stopped' }}</span>
+    <form action="/toggle-bot" method="POST" style="display:inline;">
+      {% if user.bot_running %}
+        <button type="submit" class="toggle-btn stop">Pause bot</button>
+      {% else %}
+        <button type="submit" class="toggle-btn start">Start bot</button>
+      {% endif %}
+    </form>
+    <span class="refresh-badge" id="countdown">Refreshing in 60s</span>
   </h1>
   {% with messages = get_flashed_messages() %}
     {% if messages %}{% for msg in messages %}<div class="flash">{{ msg }}</div>{% endfor %}{% endif %}
   {% endwith %}
   <div class="stats">
-    <div class="stat">
-      <div class="label">Total DMs sent</div>
-      <div class="value">{{ stats.dms_sent }}</div>
-    </div>
-    <div class="stat">
-      <div class="label">Replies received</div>
-      <div class="value">{{ stats.replies }}</div>
-    </div>
-    <div class="stat">
-      <div class="label">Last run</div>
-      <div class="value" style="font-size:16px; padding-top:10px;">{{ stats.last_run[:16] if stats.last_run else 'Not yet' }}</div>
-    </div>
+    <div class="stat"><div class="label">Total DMs sent</div><div class="value">{{ stats.dms_sent }}</div></div>
+    <div class="stat"><div class="label">Replies received</div><div class="value">{{ stats.replies }}</div></div>
+    <div class="stat"><div class="label">Last run</div><div class="value" style="font-size:16px; padding-top:10px;">{{ stats.last_run[:16] if stats.last_run else 'Not yet' }}</div></div>
   </div>
   <div class="section">
     <h2>Bot activity log</h2>
-    <div class="log">
+    <div class="log" id="log">
       {% for line in logs %}
         <div class="{{ 'sent' if 'SENT' in line else 'reply' if 'REPLY' in line else 'error' if 'ERROR' in line else 'info' }}">{{ line }}</div>
       {% else %}
@@ -78,6 +82,16 @@ h1 { font-size: 26px; font-weight: 700; margin-bottom: 32px; }
     <a href="/settings" style="display:inline-block; margin-top:16px; color:#ff4500; font-size:13px; text-decoration:none;">Edit settings →</a>
   </div>
 </div>
-<script>setTimeout(() => location.reload(), 60000);</script>
+<script>
+  const log = document.getElementById('log');
+  if (log) log.scrollTop = log.scrollHeight;
+  let secs = 60;
+  const badge = document.getElementById('countdown');
+  const interval = setInterval(() => {
+    secs--;
+    if (badge) badge.textContent = `Refreshing in ${secs}s`;
+    if (secs <= 0) { clearInterval(interval); location.reload(); }
+  }, 1000);
+</script>
 </body>
 </html>
