@@ -59,6 +59,7 @@ const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
 async function runCycle() {
   const contacted = loadContacted();
+  const sentThisSession = new Set();
   const stats = loadStats();
   stats.last_run = new Date().toISOString();
   saveStats(stats);
@@ -76,11 +77,12 @@ async function runCycle() {
         if (!post.author || !isFresh(post)) continue;
         if (forHireBlockRegex.test(`${post.title} ${post.selftext}`)) continue;
         const username = post.author.name;
-        if (contacted[username.toLowerCase()]) continue;
+        if (contacted[username.toLowerCase()] || sentThisSession.has(username.toLowerCase())) continue;
         if (username.toLowerCase() === (process.env.REDDIT_USERNAME || "").toLowerCase()) continue;
         try {
           await reddit.composeMessage({ to: username, subject: DM_SUBJECT, text: OFFER_TEXT });
           contacted[username.toLowerCase()] = new Date().toISOString();
+          sentThisSession.add(username.toLowerCase());
           saveContacted(contacted);
           dmsSentThisCycle++;
           stats.dms_sent++;

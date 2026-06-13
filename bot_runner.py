@@ -48,7 +48,7 @@ def start_bot(user):
         stderr=subprocess.DEVNULL,
         start_new_session=True
     )
-    return proc.pid
+    return os.getpgid(proc.pid)
 
 def stop_bot(pid):
     try:
